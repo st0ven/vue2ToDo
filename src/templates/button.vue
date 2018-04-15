@@ -39,7 +39,7 @@
         font-weight 700
         font-size 9pt
         cursor pointer
-        background black
+        background #35495e
         color white
         border-radius 3px
         transition-property background

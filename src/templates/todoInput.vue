@@ -1,6 +1,6 @@
 <template>
     <section class="todo-input">
-        <label class="input-label"> {{ label }} </label>
+        <label v-if="Boolean(label)" class="input-label"> {{ label }} </label>
         <textarea
             v-on:blur="handleBlur"
             v-on:focus="handleFocus"
@@ -105,9 +105,6 @@
                 )
                 this.init()
             }
-        },
-        mounted(){
-            console.log(this.textAreaContent)
         }
     }
 </script>
@@ -134,21 +131,17 @@
             font-size inherit
             font-family inherit
             resize none
-            margin-bottom 1rem
             transition border-color .3s ease
             font-family Junge, serif
-            font-size 1rem
             line-height 1.8
 
         footer
             display flex
             justify-content flex-end
-
-            &.active
-                border-color #0701ff
+            margin-top .75rem
 
         .submitButton
-            background #0701ff
-            margin-left 1rem
+            background #42b883
+            margin-left .75rem
 
 </style>
