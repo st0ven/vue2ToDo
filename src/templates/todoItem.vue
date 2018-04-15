@@ -1,38 +1,46 @@
 <template>
-    <div class="todo-item">
-        <header v-bind:class="headerClass">
-            <aside class="title">
-                <h3>To-do Item {{ count }}</h3>
-                <span class='date'> {{ getDateString }} </span>
-            </aside>
-            <aside v-if="!editing" class="actions">
-                <Button
-                    @click="editPost"
-                    v-bind:enabled="true"
-                    class="action-button">
-                    <i class="material-icons action-icon">edit</i>
-                </Button>
-                <Button
-                    @click="deletePost"
-                    v-bind:enabled="true"
-                    class="action-button"
-                    label="delete">
-                    <i class="material-icons action-icon">delete</i>
-                </Button>
-            </aside>
-        </header>
-        <TodoInput
+    <li
+        class="todo-item"
+        v-on:mouseenter="showActions"
+        v-on:mouseleave="hideActions">
+        <transition name="slideIn" appear>
+            <header class="todo-title" v-if="mount">
+                <aside class="title">
+                    <h3>To-do Item {{ count }}</h3>
+                    <span class='date'> {{ getDateString }} </span>
+                </aside>
+                <aside
+                    v-show="actions"
+                    class="actions">
+                    <Button
+                        @click="editPost"
+                        v-bind:enabled="true"
+                        class="action-button">
+                        <i class="material-icons action-icon">edit</i>
+                    </Button>
+                    <Button
+                        @click="deletePost"
+                        v-bind:enabled="true"
+                        class="action-button"
+                        label="delete">
+                        <i class="material-icons action-icon">delete</i>
+                    </Button>
+                </aside>
+            </header>
+        </transition>
+        <todo-input
             @cancel="modifyPost"
             @submit="modifyPost"
             v-if="editing"
             v-bind:initialContent="content"/>
         <template v-else>
-            <section
-                v-bind:class="bodyClass">
-                <p> {{ content }} </p>
-            </section>
+            <transition name="popIn" appear>
+                <section v-show="mount" class="body">
+                    <slot></slot>
+                </section>
+            </transition>
         </template>
-    </div>
+    </li>
 </template>
 
 <script>
@@ -48,7 +56,9 @@
         ],
         data(){
             return {
-                unmount: false
+                actions: false,
+                mount: true,
+                outro: 'outro'
             }
         },
         components: {
@@ -60,23 +70,25 @@
                 return this.index + 1
             },
             getDateString(){
-                const monthList = ['jan','feb','mar','apr','may','jun','july','aug','sept','oct','nov','dec']
-                return `[
-                    ${monthList[this.date.getMonth()].toUpperCase()}
-                    ${this.date.getDate()},
-                    ${this.date.getFullYear()}
-                    @ ${this.date.getUTCHours()}:${this.date.getUTCMinutes()}:${this.date.getUTCSeconds()}
-                ]`
+                const appendZero = value => (
+                    value > 9
+                        ? `${value}`
+                        : `0${value}`
+                )
+                const months = ['jan','feb','mar','apr','may','jun','july','aug','sept','oct','nov','dec']
+                const {date} = this
+                const dateString = `
+                    ${months[date.getMonth()].toUpperCase()}
+                    ${date.getDate()},
+                    ${date.getFullYear()} @
+                    ${appendZero(date.getHours())}:${appendZero(date.getMinutes())}:${appendZero(date.getSeconds())}
+                `
+                return dateString
             },
-            bodyClass(){
-                return `body ${this.unmount ? 'reverse-animation' : ''}`
-            },
-            headerClass(){
-                return `${this.unmount ? 'reverse-animation' : ''}`
-            }
         },
         methods: {
             deletePost(e){
+                this.mount = false
                 this.$emit(
                     'delete',
                     this.index
@@ -90,28 +102,24 @@
                 )
             },
             modifyPost( content ){
-                console.log('modify')
                 this.$emit(
                     'modify',
                     this.index,
                     content || this.content
                 )
             },
-            handleDelete(e){
-                this.unmount = true
+            showActions(){
+                this.actions = true
+            },
+            hideActions(){
+                this.actions = false
             }
-        },
-        updated(){
-            console.log(`${this.index} updated`)
-        },
-        unmount(){
-            console.log('unmounting')
         }
     }
 </script>
 
 <style lang='stylus'>
-    @keyframes popIn
+    @keyframes pop
         0%
             transform scale(.9)
             opacity 0
@@ -121,49 +129,41 @@
             transform scale(1)
             opacity 1
 
-    @keyframes popOut
+    @keyframes slide
         0%
-            transform scale(1)
-            opacity 1
-        100%
-            transform scale(.9)
-            opacity 0
-
-    @keyframes slideIn
-        0%
-            transform translateX(-20%)
+            transform translateX(-10%)
             opacity 0
         100%
             transform translateX(0)
             opacity 1
 
-    @keyframes slideOut
-        0%
-            transform translateX(0)
-            opacity 1
-        100%
-            transform translateX(-20%)
-            opacity 0
+    .popIn-enter-active
+        animation pop .5s .1s both
+    .popIn-leave-active
+        animation pop .5s reverse
+    .slideIn-enter-active
+        animation slide .3s both
+    .slideIn-leave-active
+        animation slide .3s .4s reverse
 
     .todo-item
         display flex
         flex-direction column
         cursor pointer
-        margin-bottom 1.5rem
+        margin-bottom 2rem
 
-        header
+        .todo-title
             display flex
             justify-content space-between
             align-items center
-            padding-bottom .5rem
-            animation-name slideIn
-            animation-duration .5s
-            animation-timing-function ease
-            animation-fill-mode both
+            border-bottom none
+            padding-bottom .25rem
+            margin-bottom 0
+            height 32px
 
-            &.reverse-animation
-                animation-name slideOut
-                animation-delay .3s
+        h3,
+        .date
+            line-height 1
 
         h3
             font-size 12pt
@@ -171,12 +171,13 @@
 
         .title
             display flex
-            align-items center
+            align-items flex-end
 
         .date
             font-size 8pt
             font-style italic
             margin-left .75rem
+            opacity .66
 
             &:before
                 content ''
@@ -189,11 +190,6 @@
                 display none
 
         .body
-            animation-name popIn
-            animation-duration .5s
-            animation-delay .3s
-            animation-timing-function ease
-            animation-fill-mode both
             background #eee
             padding .75rem 1.5rem
             border-radius 6px
@@ -202,14 +198,11 @@
             font-size 10pt
             line-height 1.8
             overflow auto
-
-            &.reverse-animation
-                animation-name popOut
-                animation-delay 0s
+            text-select none
 
         .action-button
             background transparent
-            color black
+            color #35495e
             padding .1rem .25rem
             margin-left .5rem
             transition-property background color
@@ -217,7 +210,7 @@
             transition-duration .3s
 
             &:hover
-                background black
+                background #35495e
                 color white
 
         .action-icon

@@ -2,25 +2,36 @@
     <section id="todo-list">
         <div class="inner-wrapper">
             <header>
-                <h1>Vue.js To-do App Test</h1>
+                <h1>To-do List Demo</h1>
             </header>
             <main>
-                <TodoInput
+                <todo-input
                     @submit="addItem"
                     v-bind:label="label"/>
             </main>
             <!-- loop through existing to-do items -->
-            <ul>
-                <li v-for="(item, index) in todoList">
-                    <TodoItem
-                        @delete="deleteItem"
-                        @edit="editItem"
-                        @modify="modifyItem"
-                        v-bind="item"
-                        v-bind:index="index"/>
-                </li>
-            </ul>
+            <transition-group
+                name="todo"
+                tag="ul">
+                <todo-item
+                    @delete="deleteItem"
+                    @edit="editItem"
+                    @modify="modifyItem"
+                    class="todo-item"
+                    v-for="(item, index) of todoList"
+                    v-bind:key="`todo-item-${item.id}`"
+                    v-bind="item"
+                    v-bind:index="index">
+                        <p>{{ item.content }}</p>
+                </todo-item>
+            </transition-group>
         </div>
+        <footer class="page-footer">
+            <div class="inner-wrapper">
+                <span>powered by</span>
+                <img id="vue-logo" src="./assets/images/vue-logo.svg">
+            </div>
+        </footer>
     </section>
 </template>
 
@@ -33,18 +44,18 @@
             TodoItem,
             TodoInput
         },
-        data: ()=>{
-            return {
-                content: "hi there",
-                label: 'write a new todo item',
-                todoList: [],
-            }
-        },
+        data: () => ({
+            content: "hi there",
+            label: 'write a new todo item',
+            todoList: [],
+            itemId: 0
+        }),
         methods: {
             addItem( content ){
                 this.todoList.push({
                     content,
-                    date: new Date()
+                    date: new Date(),
+                    id: this.itemId++
                 })
             },
             editItem( index, content ){
@@ -81,24 +92,75 @@
 </script>
 
 <style lang="stylus">
+    @keyframes slide
+        0%
+            transform translateX(-5%)
+            opacity 0
+        100%
+            transform translateX(0)
+            opacity 1
     #todo-list
         display flex
         flex-direction column
         align-items center
 
-        .inner-wrapper
-            max-width 800px
-            width 100%
-            padding 2rem 0
+    .inner-wrapper
+        max-width 800px
+        width 100%
+        padding 2rem 0
 
-        h1
-            font-weight 600
-            font-size 16pt
+        header
+            display flex
+            justify-content space-between
+            align-items flex-end
             padding-bottom .5rem
             margin-bottom 2rem
             border-bottom .5px solid black
 
-        ul
-            padding 2rem 0
-            list-style none
+            span
+                display inline
+                margin-right 1rem
+                font-weight 300
+                font-size 9pt
+                justify-self end
+
+    h1
+        font-weight 600
+        font-size 16pt
+
+    ul
+        padding 2rem 0
+        list-style none
+
+    .todo
+        display flex
+
+    .todo-leave-active
+        animation slide .3s ease-in-out reverse
+
+    #vue-logo
+        max-height 20px
+        display inline
+        margin-left .5rem
+
+    .page-footer
+        position fixed
+        display flex
+        justify-content center
+        flex-grow 1
+        width 100%
+        bottom 0
+        background #f7f7f7
+
+        .inner-wrapper
+            display flex
+            justify-content center
+            align-items center
+            padding .5rem 0
+
+        span
+            font-size 9pt
+            font-style italic
+            opacity .75
+
 </style>
